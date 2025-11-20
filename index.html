@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <link rel="icon" type="image/svg+xml" href="/webstorm-icon-logo.svg"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>WS playground</title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/laravel-echo/dist/echo.iife.js"></script>
+</head>
+<body>
+<header class="logo">
+    <a href="https://www.jetbrains.com/webstorm/">
+        <img src="/webstorm-logo.svg" alt="WebStorm logo" width="344"
+             height="90">
+    </a>
+</header>
+<div class="container mt-16">
+    <div class="flex justify-center w-full h-screen  gap-16">
+        <div class="max-w-md mx-auto">
+            <h1 class="text-2xl font-bold mb-4">ورود</h1>
+
+            <form id="step1" class="space-y-4">
+                <input class="border p-2 w-full" placeholder="شماره موبایل" name="mobile">
+                <input class="border p-2 w-full" placeholder="کدملی" name="national_code">
+                <button class="bg-blue-500 text-white px-4 py-2 rounded">مرحله بعد</button>
+            </form>
+
+            <form id="step2" class="space-y-4 hidden">
+                <input class="border p-2 w-full" placeholder="شماره موبایل" name="mobile">
+                <input class="border p-2 w-full" placeholder="کدملی" name="national_code">
+                <input class="border p-2 w-full" placeholder="کد یکبار مصرف" name="otp">
+                <button class="bg-green-500 text-white px-4 py-2 rounded">ورود</button>
+            </form>
+
+            <div id="logged" class="hidden mt-6 space-y-4">
+                <h2 class="text-xl font-semibold">ورود موفق</h2>
+                <button id="logoutBtn"
+                        class="bg-red-500 text-white px-4 py-2 rounded">
+                    خروج
+                </button>
+            </div>
+
+            <div id="notifications" class="mt-6"></div>
+        </div>
+        <div>
+            <h2>Login by google</h2>
+            <div>
+                <button id="loginBtn">Login By Google</button>
+            </div>
+            <h1 class="title" style="display: none">
+                Thank you for trying it out. <br/> Your first project is up and running
+                now.
+            </h1>
+        </div>
+    </div>
+</div>
+<footer class="technologies">
+    <img src="/technologies.svg" alt="List of supported technologies">
+</footer>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

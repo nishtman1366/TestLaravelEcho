@@ -1,0 +1,22 @@
+{
+  "name": "TestGoogle",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.1",
+    "vite": "^5.1.6"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.15",
+    "axios": "^1.12.2",
+    "laravel-echo": "^2.2.6",
+    "pusher-js": "^8.4.0",
+    "tailwindcss": "^4.1.15"
+  }
+}
