@@ -14,14 +14,13 @@ const api = axios.create({
     Accept: 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
   },
-  // xsrfCookieName: 'XSRF-TOKEN',
-  // xsrfHeaderName: 'X-XSRF-TOKEN',
 });
 
 // --- تابع login با گوگل ---
 export async function login() {
+  const btn = document.getElementById('loginBtn');
   try {
-    // CSRF
+    setButtonLoading(btn, true);
     await api.get(API_ENDPOINTS.CSRF);
 
     const res = await api.post('/login/google');
@@ -33,6 +32,9 @@ export async function login() {
     }
   } catch (err) {
     console.error('Login failed:', err);
+    showInlineMessage('ورود با گوگل با خطا مواجه شد.', 'error');
+  } finally {
+    setButtonLoading(btn, false);
   }
 }
 
@@ -57,15 +59,14 @@ async function logout() {
   } catch (e) {
     console.error('Logout error:', e);
   } finally {
-    document.getElementById('logged').classList.add('hidden');
-    document.getElementById('step1').classList.remove('hidden');
-    document.getElementById('step2').classList.add('hidden');
+    // نمایش مجدد فرم مرحله اول و ریست بقیه
+    toggleSteps({ step1: true, step2: false, logged: false });
+    clearNotifications();
   }
 }
 
 // --- بررسی callback oauth ---
 async function handleOAuthCallback() {
-  const urlParams = new URLSearchParams(window.location.search);
   if (window.location.pathname === '/oauth/google/callback') {
     try {
       await api.get(API_ENDPOINTS.CSRF);
@@ -76,48 +77,97 @@ async function handleOAuthCallback() {
       console.log('OAuth callback response:', data);
     } catch (err) {
       console.error('OAuth callback error:', err);
+      showInlineMessage('تأیید ورود با گوگل با خطا مواجه شد.', 'error');
     }
   }
 }
 
-// --- تابع برای render کردن نوتیف ---
+function showInlineMessage(message, type = 'info') {
+  const container = document.getElementById('notifications');
+  if (!container) return;
+
+  const item = document.createElement('div');
+  item.classList.add(
+    'notification-item',
+    type === 'error' ? 'error' : 'success',
+  );
+
+  const textWrapper = document.createElement('div');
+  textWrapper.classList.add('notification-text');
+
+  const title = document.createElement('div');
+  title.classList.add('notification-title');
+  title.textContent = message;
+
+  textWrapper.appendChild(title);
+  item.appendChild(textWrapper);
+
+  container.appendChild(item);
+  container.scrollTop = container.scrollHeight;
+}
+
+// --- پاک کردن نوتیف‌ها ---
+function clearNotifications() {
+  const container = document.getElementById('notifications');
+  if (!container) return;
+  container.innerHTML = '';
+}
+
+// --- تابع برای render کردن نوتیف از سرور (با آیکن) ---
 function renderNotification(e) {
   const container = document.getElementById('notifications');
   if (!container) return;
 
-  const notification = document.createElement('div');
-  notification.classList.add(
-    'border',
-    'border-gray-300',
-    'rounded-md',
-    'px-3',
-    'py-2',
-    'mt-4',
-    'flex',
-    'items-start',
-    'gap-3',
-  );
+  const item = document.createElement('div');
+  item.classList.add('notification-item', 'success');
 
-  if (e.notification?.icon) {
+  const iconUrl = e.notification?.icon;
+  if (iconUrl) {
     const icon = document.createElement('img');
-    icon.src = e.notification.icon;
-    icon.classList.add('w-10', 'h-10', 'object-cover', 'rounded-md');
-    notification.appendChild(icon);
+    icon.src = iconUrl;
+    icon.alt = 'notification icon';
+    icon.classList.add('notification-icon');
+    item.appendChild(icon);
   }
 
   const textWrapper = document.createElement('div');
-  const title = document.createElement('h2');
-  title.classList.add('text-lg', 'font-semibold');
-  title.innerText = e.notification?.title ?? '-';
+  textWrapper.classList.add('notification-text');
 
-  const body = document.createElement('p');
-  body.classList.add('text-sm', 'opacity-80');
-  body.innerText = e.notification?.body ?? '-';
+  const title = document.createElement('div');
+  title.classList.add('notification-title');
+  title.textContent = e.notification?.title ?? '-';
+
+  const body = document.createElement('div');
+  body.classList.add('notification-body');
+  body.textContent = e.notification?.body ?? '-';
 
   textWrapper.appendChild(title);
   textWrapper.appendChild(body);
-  notification.appendChild(textWrapper);
-  container.appendChild(notification);
+
+  item.appendChild(textWrapper);
+  container.appendChild(item);
+
+  // اسکرول به آخرین نوتیف
+  container.scrollTop = container.scrollHeight;
+}
+
+// --- Helper: وضعیت لودینگ دکمه ---
+function setButtonLoading(button, isLoading) {
+  if (!button) return;
+
+  if (isLoading) {
+    if (button.classList.contains('is-loading')) return;
+
+    button.classList.add('is-loading');
+
+    const spinner = document.createElement('div');
+    spinner.classList.add('btn-spinner');
+    button.appendChild(spinner);
+  } else {
+    button.classList.remove('is-loading');
+    const spinner = button.querySelector('.btn-spinner');
+    if (spinner) spinner.remove();
+  }
 }
 
 function getCsrfTokenFromCookie() {
@@ -127,33 +177,8 @@ function getCsrfTokenFromCookie() {
     ?.split('=')[1];
 }
 
-// تست مستقیم auth برادکست با axios
-async function testBroadcastAuthDirect() {
-  try {
-    await api.get(API_ENDPOINTS.CSRF);
-
-    const res = await api.post('broadcasting/auth', {
-      channel_name: 'private-user.1', // کانال تستی
-      socket_id: 'test-socket-id',
-    });
-
-    console.log('broadcasting/auth status:', res.status);
-    console.log('broadcasting/auth response:', res.data);
-  } catch (err) {
-    if (err.response) {
-      console.log('broadcasting/auth status:', err.response.status);
-      console.log('broadcasting/auth response:', err.response.data);
-    } else {
-      console.error('broadcasting/auth error:', err);
-    }
-  }
-}
-
 // --- تابع setup Echo و کانال‌ها ---
 async function setupEcho(userId) {
-  // فرض می‌گیریم CSRF قبلاً گرفته شده (getCurrentUser یا login)
-  const csrfToken = getCsrfTokenFromCookie();
-
   const echo = new Echo({
     broadcaster: 'reverb',
     key: 'il1eyh9y7kajcflz5itj',
@@ -165,14 +190,13 @@ async function setupEcho(userId) {
 
     authEndpoint: BASE_URL + 'broadcasting/auth',
 
-    authorizer: (channel, options) => {
+    authorizer: (channel) => {
       return {
         authorize: async (socketId, callback) => {
           api
             .get(API_ENDPOINTS.CSRF)
-            .then((response) => {
+            .then(() => {
               const csrf = getCsrfTokenFromCookie();
-              console.log('CSRF token cookie:', csrf);
               api
                 .post(
                   'api/broadcasting/auth',
@@ -212,42 +236,102 @@ async function setupEcho(userId) {
 
   echo
     .channel(CHANNELS.PUBLIC)
-    .listen(`.${EVENTS.PUBLIC_NOTIFICATION}`, (e) => renderNotification(e));
+    .listen(`.${EVENTS.PUBLIC_NOTIFICATION}`, (e) => {
+      renderNotification(e);
+      showNativeNotification(e);
+    });
 
   echo
     .private(`${CHANNELS.PRIVATE_PREFIX}${userId}`)
     .subscribed(() => console.log('User subscribed to private channel'))
-    .listen(`.${EVENTS.PRIVATE_NOTIFICATION}`, (e) => renderNotification(e));
+    .listen(`.${EVENTS.PRIVATE_NOTIFICATION}`, (e) => {
+      renderNotification(e);
+      showNativeNotification(e);
+    });
 
   return echo;
 }
 
+// --- کمک‌کننده برای مدیریت حالت فرم‌ها ---
+function toggleSteps({ step1, step2, logged }) {
+  const step1El = document.getElementById('step1');
+  const step2El = document.getElementById('step2');
+  const loggedEl = document.getElementById('logged');
+
+  if (!step1El || !step2El || !loggedEl) return;
+
+  // پنهان‌کردن / نمایش با hidden
+  step1El.classList.toggle('hidden', !step1);
+  step2El.classList.toggle('hidden', !step2);
+  loggedEl.classList.toggle('hidden', !logged);
+
+  // کنترل کلاس انیمیشن فرم‌ها
+  step1El.classList.toggle('step-form--active', step1);
+  step2El.classList.toggle('step-form--active', step2);
+}
+
 // --- Event listener فرم‌ها ---
-document.getElementById('step1').addEventListener('submit', async (ev) => {
+document.getElementById('step1')?.addEventListener('submit', async (ev) => {
   ev.preventDefault();
-  await api.get(API_ENDPOINTS.CSRF);
+  clearNotifications();
 
-  const form = new FormData(ev.target);
-  await api.post(API_ENDPOINTS.LOGIN_STEP1, form);
+  const submitBtn = document.getElementById('step1Submit');
 
-  document.getElementById('step1').classList.add('hidden');
-  document.getElementById('step2').classList.remove('hidden');
+  try {
+    setButtonLoading(submitBtn, true);
+    await api.get(API_ENDPOINTS.CSRF);
+
+    const form = new FormData(ev.target);
+    await api.post(API_ENDPOINTS.LOGIN_STEP1, form);
+
+    toggleSteps({ step1: false, step2: true, logged: false });
+    showInlineMessage('کد تأیید ارسال شد.', 'success');
+  } catch (error) {
+    console.error('Step1 login error:', error);
+    showInlineMessage('خطا در ارسال کد تأیید. لطفاً دوباره تلاش کنید.', 'error');
+  } finally {
+    setButtonLoading(submitBtn, false);
+  }
 });
 
-document.getElementById('step2').addEventListener('submit', async (ev) => {
+document.getElementById('step2')?.addEventListener('submit', async (ev) => {
   ev.preventDefault();
-  await api.get(API_ENDPOINTS.CSRF);
+  clearNotifications();
 
-  const form = new FormData(ev.target);
-  const res = await api.post(API_ENDPOINTS.LOGIN_STEP2, form);
-  const user = res.data;
+  const submitBtn = document.getElementById('step2Submit');
 
-  console.log('Logged in user:', user);
+  try {
+    setButtonLoading(submitBtn, true);
+    await api.get(API_ENDPOINTS.CSRF);
 
-  await setupEcho(user.id);
+    const form = new FormData(ev.target);
+    const res = await api.post(API_ENDPOINTS.LOGIN_STEP2, form);
+    const user = res.data;
 
-  document.getElementById('step2').classList.add('hidden');
-  document.getElementById('logged').classList.remove('hidden');
+    console.log('Logged in user:', user);
+
+    const userIdSpan = document.getElementById('user-id');
+    if (userIdSpan) {
+      userIdSpan.innerText = user.id;
+    }
+
+    await requestNotificationPermission();
+    await setupEcho(user.id);
+
+    toggleSteps({ step1: false, step2: false, logged: true });
+    showInlineMessage('ورود با موفقیت انجام شد.', 'success');
+  } catch (error) {
+    console.error('Step2 login error:', error);
+    showInlineMessage('کد تأیید نامعتبر است یا خطا رخ داده است.', 'error');
+  } finally {
+    setButtonLoading(submitBtn, false);
+  }
+});
+
+// --- دکمه بازگشت از مرحله ۲ به ۱ ---
+document.getElementById('backToStep1')?.addEventListener('click', () => {
+  toggleSteps({ step1: true, step2: false, logged: false });
+  clearNotifications();
 });
 
 // --- Load listener برای OAuth callback + چک وضعیت لاگین ---
@@ -256,19 +340,46 @@ window.addEventListener('load', async () => {
 
   const user = await getCurrentUser();
   if (user && user.id) {
-    document.getElementById('step1').classList.add('hidden');
-    document.getElementById('step2').classList.add('hidden');
-    document.getElementById('logged').classList.remove('hidden');
     document.getElementById('user-id').innerText = user.id;
+
+    await requestNotificationPermission();
     await setupEcho(user.id);
+
+    toggleSteps({ step1: false, step2: false, logged: true });
+  } else {
+    toggleSteps({ step1: true, step2: false, logged: false });
   }
 });
 
+async function requestNotificationPermission() {
+  if (!('Notification' in window)) {
+    alert('مرورگر شما از نوتیف پشتیبانی نمی‌کند');
+    return false;
+  }
+
+  let permission = Notification.permission;
+
+  if (permission === 'default') {
+    permission = await Notification.requestPermission();
+  }
+
+  return permission === 'granted';
+}
+
+function showNativeNotification(e) {
+  if (Notification.permission !== 'granted') {
+    console.log('Permission not granted');
+    return;
+  }
+
+  new Notification(e.notification?.title ?? 'پیام جدید', {
+    body: e.notification?.body ?? '',
+    icon: e.notification?.icon ?? undefined,
+  });
+}
+
 // --- Button login ---
-document.getElementById('loginBtn').addEventListener('click', login);
+document.getElementById('loginBtn')?.addEventListener('click', login);
 
 // --- Button logout ---
-document.getElementById('logoutBtn').addEventListener('click', logout);
-
-// برای تست دستی:
-// await testBroadcastAuthDirect();
+document.getElementById('logoutBtn')?.addEventListener('click', logout);

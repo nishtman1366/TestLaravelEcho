@@ -1,65 +1,148 @@
 <!doctype html>
-<html lang="en">
+<html lang="fa">
 <head>
     <meta charset="UTF-8"/>
     <link rel="icon" type="image/svg+xml" href="/webstorm-icon-logo.svg"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>WS playground</title>
-    <link rel="stylesheet" href="/style.css">
+    <title>ورود کاربران</title>
+
+    <!-- استایل اصلی پروژه -->
+    <link rel="stylesheet" href="/style.css"/>
+
+    <!-- فقط Tailwind برای کمک به کلاس‌های کمکی -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <script src="https://cdn.jsdelivr.net/npm/laravel-echo/dist/echo.iife.js"></script>
 </head>
-<body>
+<body class="page">
 <header class="logo">
     <a href="https://www.jetbrains.com/webstorm/">
-        <img src="/webstorm-logo.svg" alt="WebStorm logo" width="344"
-             height="90">
+        <img src="/webstorm-logo.svg" alt="WebStorm logo" width="344" height="90"/>
     </a>
 </header>
-<div class="container mt-16">
-    <div class="flex justify-center w-full h-screen  gap-16">
-        <div class="max-w-md mx-auto">
-            <h1 class="text-2xl font-bold mb-4">ورود</h1>
 
-            <form id="step1" class="space-y-4">
-                <input class="border p-2 w-full" placeholder="شماره موبایل" name="mobile">
-                <input class="border p-2 w-full" placeholder="کدملی" name="national_code">
-                <button class="bg-blue-500 text-white px-4 py-2 rounded">مرحله بعد</button>
+<main class="container mt-12 lg:mt-16">
+    <div class="auth-layout">
+        <!-- کارت ورود با OTP -->
+        <section class="auth-card">
+            <form id="step1" class="step-form step-form--active space-y-4">
+                <h1 class="auth-title">ورود به حساب کاربری</h1>
+
+                <p class="auth-subtitle">
+                    شماره موبایل و کدملی خود را وارد کنید. در مرحله بعد کد یکبار مصرف برای شما ارسال می‌شود.
+                </p>
+                <div class="form-group">
+                    <label class="form-label" for="mobile-step1">شماره موبایل</label>
+                    <input
+                            id="mobile-step1"
+                            class="form-input"
+                            placeholder="مثلاً 09xxxxxxxxx"
+                            name="mobile"
+                            inputmode="tel"
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="national-step1">کد ملی</label>
+                    <input
+                            id="national-step1"
+                            class="form-input"
+                            placeholder="xxxxxxxxxx"
+                            name="national_code"
+                            inputmode="numeric"
+                    />
+                </div>
+
+                <button type="submit" id="step1Submit" class="btn btn-primary w-full">
+                    <span class="btn-label">مرحله بعد</span>
+                </button>
+
             </form>
 
-            <form id="step2" class="space-y-4 hidden">
-                <input class="border p-2 w-full" placeholder="شماره موبایل" name="mobile">
-                <input class="border p-2 w-full" placeholder="کدملی" name="national_code">
-                <input class="border p-2 w-full" placeholder="کد یکبار مصرف" name="otp">
-                <button class="bg-green-500 text-white px-4 py-2 rounded">ورود</button>
+            <form id="step2" class="step-form hidden space-y-4">
+                <div class="form-group">
+                    <label class="form-label" for="mobile-step2">شماره موبایل</label>
+                    <input
+                            id="mobile-step2"
+                            class="form-input"
+                            placeholder="09xxxxxxxxx"
+                            name="mobile"
+                            inputmode="tel"
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="national-step2">کد ملی</label>
+                    <input
+                            id="national-step2"
+                            class="form-input"
+                            placeholder="xxxxxxxxxx"
+                            name="national_code"
+                            inputmode="numeric"
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="otp">کد یکبار مصرف</label>
+                    <input
+                            id="otp"
+                            class="form-input tracking-[0.3em] text-center"
+                            placeholder="____"
+                            name="otp"
+                            inputmode="numeric"
+                    />
+                </div>
+
+                <button type="submit" id="step2Submit" class="btn btn-success w-full">
+                    <span class="btn-label">ورود</span>
+                </button>
+
+                <button type="button" id="backToStep1" class="btn btn-ghost w-full">
+                    بازگشت به مرحله قبل
+                </button>
             </form>
 
-            <div id="logged" class="hidden mt-6 space-y-4">
-                <h2 class="text-xl font-semibold">ورود موفق</h2>
-                <h2 class="text-xl font-semibold">شناسه کاربر: <span id="user-id"></span></h2>
-                <button id="logoutBtn"
-                        class="bg-red-500 text-white px-4 py-2 rounded">
-                    خروج
+            <div id="logged" class="hidden mt-6 space-y-3 text-right">
+                <h1 class="auth-title">حساب کاربری</h1>
+
+                <h2 class="text-xl font-semibold text-emerald-300">ورود موفق</h2>
+                <p class="text-sm text-slate-200">
+                    شناسه کاربر:
+                    <span id="user-id" class="font-mono text-emerald-200"></span>
+                </p>
+                <button id="logoutBtn" class="btn btn-danger w-full">
+                    خروج از حساب
                 </button>
             </div>
 
-            <div id="notifications" class="mt-6"></div>
-        </div>
-        <div>
-            <h2>Login by google</h2>
-            <div>
-                <button id="loginBtn">Login By Google</button>
-            </div>
-            <h1 class="title" style="display: none">
-                Thank you for trying it out. <br/> Your first project is up and running
-                now.
-            </h1>
-        </div>
+            <div id="notifications" class="notifications mt-16 text-right text-sm"></div>
+        </section>
+
+        <!-- ساید کارت: ورود با گوگل / پیام خوش‌آمد -->
+        <section class="side-card">
+            <h2 class="side-title">ورود با گوگل</h2>
+            <p class="side-subtitle">
+                برای ورود سریع‌تر، می‌توانید از حساب گوگل خود استفاده کنید.
+            </p>
+
+            <button id="loginBtn" class="btn btn-google w-full">
+                <span class="btn-label">ورود با Google</span>
+            </button>
+
+
+            <h3 class="side-footer-title">
+                پروژه شما با موفقیت اجرا شده است
+            </h3>
+            <p class="side-footer-text">
+                می‌توانید از این صفحه به عنوان نقطه شروع برای توسعه و تست
+                قابلیت‌های جدید استفاده کنید.
+            </p>
+        </section>
     </div>
-</div>
+</main>
+
 <footer class="technologies">
-    <img src="/technologies.svg" alt="List of supported technologies">
+    <img src="/technologies.svg" alt="List of supported technologies"/>
 </footer>
+
 <script type="module" src="/src/main.js"></script>
 </body>
 </html>
