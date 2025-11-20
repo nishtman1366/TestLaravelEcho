@@ -216,7 +216,7 @@ async function setupEcho(userId) {
 
   echo
     .private(`${CHANNELS.PRIVATE_PREFIX}${userId}`)
-    .subscribed(() => console.log('✅ User subscribed to private channel'))
+    .subscribed(() => console.log('User subscribed to private channel'))
     .listen(`.${EVENTS.PRIVATE_NOTIFICATION}`, (e) => renderNotification(e));
 
   return echo;
@@ -259,6 +259,7 @@ window.addEventListener('load', async () => {
     document.getElementById('step1').classList.add('hidden');
     document.getElementById('step2').classList.add('hidden');
     document.getElementById('logged').classList.remove('hidden');
+    document.getElementById('user-id').innerText = user.id;
     await setupEcho(user.id);
   }
 });
